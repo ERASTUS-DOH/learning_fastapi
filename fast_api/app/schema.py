@@ -1,0 +1,45 @@
+import datetime as _dt
+from pydantic import BaseModel, EmailStr
+
+class PostBase(BaseModel):
+    title: str
+    content: str
+    published: bool = True
+
+class PostCreate(PostBase):
+    pass
+ 
+class PostResponse(PostBase):
+    id: int
+    created_at: _dt.datetime
+
+    class Config:
+        orm_mode = True
+
+
+class UserCreate(BaseModel):
+    first_name: str
+    last_name: str
+    email: EmailStr
+    password: str
+
+class UserResponse(BaseModel):
+    id: int
+    first_name: str
+    last_name: str
+    email: str
+
+    class Config:
+        orm_mode = True
+
+
+
+# class CreatePost(BaseModel):
+#     title: str
+#     content: str
+#     published: bool = True
+
+# class UpdatePost(BaseModel):
+#     title: str
+#     content: str
+#     published: bool
