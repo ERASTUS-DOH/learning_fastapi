@@ -8,9 +8,9 @@ from ..database import get_db
 
 from .. models import User
 
-router = APIRouter()
+router = APIRouter(prefix="/users", tags=["users"]) #tags categorizes api for documentation.
 
-@router.post("/users", status_code=status.HTTP_201_CREATED, response_model=UserResponse)
+@router.post("/", status_code=status.HTTP_201_CREATED, response_model=UserResponse)
 def create_user(user: UserCreate, db: Session = Depends(get_db)):
     
     # hashing user password.
@@ -24,7 +24,7 @@ def create_user(user: UserCreate, db: Session = Depends(get_db)):
 
     return new_user
 
-@router.get("/users/{id}", response_model=UserResponse)
+@router.get("/{id}", response_model=UserResponse)
 def get_user(id: int, db: Session = Depends(get_db)):
     queried_user = db.query(User).filter(User.id == id).first()
 

@@ -7,8 +7,9 @@ from fastapi import FastAPI
 from .database import engine
 
 from . import models
-from .routers import user as user
-from .routers import post as post
+from .routers import user as user, post as post, auth as auth
+
+
 
 models.Base.metadata.create_all(bind=engine)
 
@@ -55,6 +56,7 @@ def find_post_index(id):
             return index 
 
 # include router 
+app.include_router(auth.router)
 app.include_router(post.router)            
 app.include_router(user.router)            
 
