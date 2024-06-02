@@ -12,7 +12,7 @@ router = APIRouter(prefix="/posts", tags=["Posts"])  #tags used to categorize ap
 
 
 @router.get("/", response_model=List[PostResponse])
-def get_posts(db: Session = Depends(get_db)):
+def get_posts(db: Session = Depends(get_db), current_user = Depends(get_current_user)):
     # Sql query before.
     # query = "SELECT * FROM post"
     # cursor.execute(query=query)
@@ -22,7 +22,7 @@ def get_posts(db: Session = Depends(get_db)):
 
 # add a post
 @router.post("/", status_code=status.HTTP_201_CREATED, response_model=PostResponse)
-def create_post(post:PostCreate, db: Session = Depends(get_db), user_id = Depends(get_current_user)):
+def create_post(post:PostCreate, db: Session = Depends(get_db), current_user = Depends(get_current_user)):
 
     # fetching from a static file 
     # post_dict = dict(post)
@@ -34,7 +34,7 @@ def create_post(post:PostCreate, db: Session = Depends(get_db), user_id = Depend
     # mypost = cursor.fetchone()
     # conn.commit()
 
-    print(user_id)
+    print(current_user.email)
 
     # creating a new post through SQL_Alchemy
     post_dict = dict(post)
@@ -46,7 +46,7 @@ def create_post(post:PostCreate, db: Session = Depends(get_db), user_id = Depend
     return  new_created_post
 
 @router.get("/{id}", response_model=PostResponse)
-def get_post_with_id(id: int, db: Session = Depends(get_db), user_id = Depends(get_current_user)):
+def get_post_with_id(id: int, db: Session = Depends(get_db), current_user = Depends(get_current_user)):
     # post = find_post_by_id(id = id)
     # Raw SQL
     # cursor.execute(""" SELECT * from post WHERE id = %s""", (str(id)))
@@ -65,7 +65,7 @@ def get_post_with_id(id: int, db: Session = Depends(get_db), user_id = Depends(g
 
 
 @router.delete("/{id}")
-def delete_post(id: int, db: Session = Depends(get_db), user_id = Depends(get_current_user)):
+def delete_post(id: int, db: Session = Depends(get_db), current_user = Depends(get_current_user)):
 
     # cursor.execute("""DELETE FROM post WHERE id = %s RETURNING * """, (str(id)))
     # deleted_post = cursor.fetchone()
@@ -82,7 +82,7 @@ def delete_post(id: int, db: Session = Depends(get_db), user_id = Depends(get_cu
     return Response(status_code=status.HTTP_204_NO_CONTENT)
 
 @router.put("/{id}", response_model = PostResponse)
-def update_post(id: int, post: PostCreate, db: Session = Depends(get_db), user_id = Depends(get_current_user)):
+def update_post(id: int, post: PostCreate, db: Session = Depends(get_db), current_user = Depends(get_current_user)):
 
     # Running raw query.
     # cursor.execute(""" UPDATE post SET title = %s, content = %s, published = %s WHERE id = %s RETURNING * """, (str(post.title), str(post.content), str(post.publish), str(id)))
