@@ -2,21 +2,6 @@ import datetime as _dt
 from typing import Optional
 from pydantic import BaseModel, EmailStr
 
-class PostBase(BaseModel):
-    title: str
-    content: str
-    published: bool = True
-
-class PostCreate(PostBase):
-    pass
- 
-class PostResponse(PostBase):
-    id: int
-    created_at: _dt.datetime
-
-    class Config:
-        orm_mode = True
-
 
 class UserCreate(BaseModel):
     first_name: str
@@ -36,6 +21,23 @@ class UserResponse(BaseModel):
 class UserLogin(BaseModel):
     email: EmailStr
     password: str
+
+class PostBase(BaseModel):
+    title: str
+    content: str
+    published: bool = True
+
+class PostCreate(PostBase):
+    pass
+ 
+class PostResponse(PostBase):
+    id: int
+    created_at: _dt.datetime
+    owner_id: int
+    owner_details: UserResponse
+
+    class Config:
+        orm_mode = True
 
 
 class Token(BaseModel):

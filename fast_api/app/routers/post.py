@@ -1,6 +1,6 @@
 from fastapi import Response, status, HTTPException, Depends, APIRouter
 from sqlalchemy.orm import Session
-from typing import List
+from typing import List, Optional
 
 from ..models import Post
 from ..schema import PostCreate, PostResponse
@@ -12,18 +12,17 @@ router = APIRouter(prefix="/posts", tags=["Posts"])  #tags used to categorize ap
 
 
 @router.get("/", response_model=List[PostResponse])
-def get_posts(db: Session = Depends(get_db), current_user = Depends(get_current_user)):
+def get_posts(db: Session = Depends(get_db), current_user = Depends(get_current_user), limit: int = 10, skip: int = 0, search: Optional[str] = "" ):
     # Sql query before.
     # query = "SELECT * FROM post"
     # cursor.execute(query=query)
     # posts = cursor.fetchall()
-    posts = db.query(Post).all()
+    posts = db.query(Post).filter(Post.owner_id == current_user.id).filter(Post.title.contains(search)).limit(limit=limit).offset(offset=skip).all()     #updated to get only post that belong to the current logged in user.
     return posts
 
 # add a post
 @router.post("/", status_code=status.HTTP_201_CREATED, response_model=PostResponse)
 def create_post(post:PostCreate, db: Session = Depends(get_db), current_user = Depends(get_current_user)):
-
     # fetching from a static file 
     # post_dict = dict(post)
     # post_dict["id"] = randrange(1, 10000)
@@ -39,7 +38,7 @@ def create_post(post:PostCreate, db: Session = Depends(get_db), current_user = D
     # creating a new post through SQL_Alchemy
     post_dict = dict(post)
     # print(post_dict["publish"])
-    new_created_post = Post(**post_dict)
+    new_created_post = Post(owner_id = current_user.id, **post_dict)
     db.add(new_created_post)
     db.commit()
     db.refresh(new_created_post)
@@ -54,13 +53,18 @@ def get_post_with_id(id: int, db: Session = Depends(get_db), current_user = Depe
     # conn.commit()
 
     # using sql alchemy.
-    queried_post = db.query(Post).filter(Post.id ==  id).first()
+    queried_post = db.query(Post).filter(Post.id == id).first()
 
     if not queried_post:
         # response.status_code = status.HTTP_404_NOT_FOUND
         # return f"post with id {id} was not found."
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,
                             detail=f"post with id: {id} was not found")
+
+    if queried_post.owner_id != current_user.id:#validate user can only read their post with specific id.
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Not authorized to perform request action")
+    
+
     return queried_post
 
 
@@ -75,6 +79,10 @@ def delete_post(id: int, db: Session = Depends(get_db), current_user = Depends(g
 
     if post_to_be_deleted == None:
        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"The post with id {id} does not exist")
+    
+    # validate if the selected post belongs to the individual trying to delete it.
+    if post_to_be_deleted.owner_id != current_user.id:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Not authorized to perform request action")
     
     db.delete(instance=post_to_be_deleted)
     db.commit()
@@ -97,6 +105,10 @@ def update_post(id: int, post: PostCreate, db: Session = Depends(get_db), curren
     post_to_be_updated = post_query.first()
     if post_to_be_updated == None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"The post with id {id} does not exist")
+    
+    # validate if the post being updated belongs to the current user.
+    if post_to_be_updated.owner_id != current_user.id:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail = "Not authorized to perform request action")
     
     update_post_dict = dict(post)
     post_query.update(values = {"title" : update_post_dict["title"], "content" : update_post_dict["content"], "published" : update_post_dict["published"]}, synchronize_session=False)
