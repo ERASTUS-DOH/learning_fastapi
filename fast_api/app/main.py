@@ -2,10 +2,14 @@ from fastapi import FastAPI
 from .database import engine
 from . import models
 from .routers import user as user, post as post, auth as auth
+from .config import settings
+
 
 models.Base.metadata.create_all(bind=engine)
 
 app = FastAPI()
+
+print(dict(settings))
 
 
 # include router 
